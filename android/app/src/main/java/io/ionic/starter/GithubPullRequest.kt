@@ -1,13 +1,22 @@
 package io.ionic.starter
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.RemoteViews
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.DateFormat
 import java.util.*
-
 
 /**
  * Implementation of App Widget functionality.
@@ -48,9 +57,17 @@ internal fun updateAppWidget(
         context.resources.getString(
             R.string.app_widget_updated_at, dateString));
 
-    // Set widget list
-    val serviceIntent = Intent(context, GithubPullRequestService::class.java)
-    views.setRemoteAdapter(R.id.widgetList, serviceIntent)
+
+    // Set sync button
+    val intentUpdate = Intent(context, GithubPullRequest::class.java)
+    intentUpdate.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+    val idArray = intArrayOf(appWidgetId)
+    intentUpdate.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, idArray);
+    val pendingUpdate = PendingIntent.getBroadcast(
+        context, appWidgetId, intentUpdate,
+        PendingIntent.FLAG_UPDATE_CURRENT
+    )
+    views.setOnClickPendingIntent(R.id.widgetSyncIcon, pendingUpdate);
 
     // Instruct the widget manager to update the widget
     appWidgetManager.updateAppWidget(appWidgetId, views)
